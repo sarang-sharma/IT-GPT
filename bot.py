@@ -3,7 +3,7 @@ import streamlit as st
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
-st.title("IT-GPT [beta]")
+st.title("IT-GPT")
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
@@ -50,7 +50,6 @@ def retrieve_context_from_qdrant(query_embedding, limit: int = 20):
     scored_context = []
     for result in search_response:
         try:
-            print(result.score)
             if result.score > 0.745:
                 scored_context.append((result.score, result.payload.get('text'), result.payload.get('position')))
         except KeyError:
@@ -81,8 +80,11 @@ for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            
+with st.chat_message("assistant"):
+    st.markdown("Hi, there! I can help you with any query related to Income Tax.")        
 
-if prompt := st.chat_input("Ask any question related to income tax."):
+if prompt := st.chat_input("Type your query here..."):
 
     add_message(st.session_state.messages, {"role": "system", "content": "You are a helpful assistant specializing in simplifying and explaining the intricacies of the Indian income tax act and labour laws of India for someone unfamiliar with these topics. Your responses should be for helping a common man"})
 
