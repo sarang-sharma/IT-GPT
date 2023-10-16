@@ -3,7 +3,7 @@ import streamlit as st
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
-st.title("IT-GPT")
+st.title("IT-GPT [beta]")
 
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
@@ -82,7 +82,7 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-if prompt := st.chat_input("Ask a question about income tax."):
+if prompt := st.chat_input("Ask any question related to income tax."):
 
     add_message(st.session_state.messages, {"role": "system", "content": "You are a helpful assistant specializing in simplifying and explaining the intricacies of the Indian income tax act and labour laws of India for someone unfamiliar with these topics. Your responses should be for helping a common man"})
 
