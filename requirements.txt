@@ -1,0 +1,3 @@
+openai
+streamlit
+qdrant_client
