@@ -88,7 +88,7 @@ with st.chat_message("assistant"):
 
 if prompt := st.chat_input("Type your query here..."):
     
-    add_message(st.session_state.messages, {"role": "system", "content": "You are a helpful assistant specializing in simplifying and explaining the intricacies of the Indian income tax act and labour laws of India for someone unfamiliar with these topics. Your responses should be for helping a common man"})
+    add_message(st.session_state.messages, {"role": "system", "content": "You are a helpful assistant specializing in simplifying and explaining the intricacies of the Indian income tax act and labour laws of India for someone unfamiliar with these topics. Your responses should be very easy to understand for someone with minimal knowledge about income tax laws"})
 
     # Save the user's message to the session state
     add_message(st.session_state.messages, {"role": "user", "content": prompt})
