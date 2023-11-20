@@ -1,14 +1,15 @@
 import openai
+from openai import OpenAI
 import streamlit as st
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
 st.title("IT-GPT")
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 OPENAI_EMBEDDINGS_ENGINE = "text-embedding-ada-002"
 
+ai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 qdrant_client = QdrantClient(
     "https://96a4ea49-33c9-4e25-93c6-98048c7725ee.europe-west3-0.gcp.cloud.qdrant.io", 
@@ -19,11 +20,11 @@ qdrant_client = QdrantClient(
 
 def get_embedding(text: str, model: str = OPENAI_EMBEDDINGS_ENGINE):
     text = text.replace("\n", " ")
-    result = openai.Embedding.create(
-        engine=model,
+    result = ai_client.embeddings.create(
+        model=model,
         input=text[:28000]
     )
-    return result["data"][0]["embedding"]
+    return result.data[0].embedding
 
 def total_characters(messages):
     return sum(len(message["content"]) for message in messages)
@@ -50,7 +51,7 @@ def retrieve_context_from_qdrant(query_embedding, limit: int = 20):
     scored_context = []
     for result in search_response:
         try:
-            if result.score > 0.745:
+            if result.score > 0.76:
                 scored_context.append((result.score, result.payload.get('text'), result.payload.get('position')))
         except KeyError:
             print("Error: Expected key structure not found in point.")
@@ -82,10 +83,11 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
             
 with st.chat_message("assistant"):
-    st.markdown("Hi, there! I can help you with any query related to Income Tax.")        
+    if len(st.session_state.messages)== 0:
+        st.markdown("Hi there! I can help you with any query related to Income Tax in India.")        
 
 if prompt := st.chat_input("Type your query here..."):
-
+    
     add_message(st.session_state.messages, {"role": "system", "content": "You are a helpful assistant specializing in simplifying and explaining the intricacies of the Indian income tax act and labour laws of India for someone unfamiliar with these topics. Your responses should be for helping a common man"})
 
     # Save the user's message to the session state
@@ -106,11 +108,11 @@ if prompt := st.chat_input("Type your query here..."):
         # Save the retrieved context for potential future use
         st.session_state.last_context = context_sections
 
-    # Combine context sections into one system message to prevent exceeding message limit
+    # # Combine context sections into one system message to prevent exceeding message limit
     combined_context = " ".join(context_sections)
     system_message = {
         "role": "system",
-        "content": f"Answer the user's query from the provided context. Give the relevant sections, articles as the sources and links wherever possible. Give examples to supplement your response. Strictly answer only from the context provided.\n\nContext:\n {combined_context[:40000]}."
+        "content": f"Answer the user's query from the provided context. Give the relevant sections, articles as the sources and links wherever possible. Give examples to supplement your response. Strictly answer only from the context provided. If the context is irrelevant or not sufficient to answer the user's query, ask for more details from the user\n\nContext:\n {combined_context[:40000]}."
     }
     
     # This is our working copy of messages for the current completion
@@ -120,15 +122,16 @@ if prompt := st.chat_input("Type your query here..."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
-        print("\n\n\n------------------------\n\n\n", current_messages)
-        for response in openai.ChatCompletion.create(
+        for response in ai_client.chat.completions.create(
             model=st.session_state["openai_model"],
             messages=current_messages,
             stream=True,
         ):
-            full_response += response.choices[0].delta.get("content", "")
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
+            # print("\n\n\n------------------------\n\n\n", response)
+            if response.choices[0].delta.content is not None:
+                full_response += response.choices[0].delta.content
+                message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response)
         # print("\n\n\n------------------------\n\n\n", full_response)
 
     # Add only the assistant's response to the session state
