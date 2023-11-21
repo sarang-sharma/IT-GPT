@@ -84,7 +84,7 @@ for message in st.session_state.messages:
             
 with st.chat_message("assistant"):
     if len(st.session_state.messages)== 0:
-        st.markdown("Hi there! I can help you with any query related to Income Tax in India.")        
+        st.markdown("Hi there! I can help you with any query related to Income Tax and Labour Laws in India.")        
 
 if prompt := st.chat_input("Type your query here..."):
     
